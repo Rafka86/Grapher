@@ -1,8 +1,5 @@
-package net.firemiller.grapher.core
+package net.firemiller.grapher.controller.util.converter
 
-/**
-* Created by Rafka on 2017/08/11.
-*/
 enum class TokenType {
   NUMBER,
   VARIABLE,

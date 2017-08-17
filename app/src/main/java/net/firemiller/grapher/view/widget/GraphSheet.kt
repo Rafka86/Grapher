@@ -5,7 +5,6 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.DashPathEffect
 import android.graphics.Paint
-import android.text.style.AbsoluteSizeSpan
 import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.ScaleGestureDetector

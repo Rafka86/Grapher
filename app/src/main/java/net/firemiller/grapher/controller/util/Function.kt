@@ -47,9 +47,13 @@ class Function(graphercore: GrapherCore) : Observable() {
     vals.put(variableName, 0.0f)
   }
 
-  fun getValue(x: Float): Float {
-    vals.put(variableName, x)
-    return exp.Eval(vals)
+  fun getValues(xs: FloatArray): FloatArray {
+    val vs = FloatArray(xs.size)
+    for (i in xs.indices) {
+      vals.put(variableName, xs[i])
+      vs[i] = exp.Eval(vals)
+    }
+    return vs
   }
 
   private fun updated() {

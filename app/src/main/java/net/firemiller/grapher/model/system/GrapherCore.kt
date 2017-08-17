@@ -91,6 +91,8 @@ class GrapherCore : Observable(), Observer {
   }
 
   fun setViewSize(width: Int, height: Int) {
+    if (viewSizeFlag) return
+
     viewWidth = width.toFloat()
     viewHeight = height.toFloat()
     viewRate = viewHeight / viewWidth
@@ -101,7 +103,18 @@ class GrapherCore : Observable(), Observer {
     updated()
   }
 
-  fun updated() {
+  fun addCenter(deltaX: Float, deltaY: Float) {
+    centerX += deltaX
+    if (centerX !in centerMinusLimit..centerPlusLimit)
+      centerX = if (centerX > centerPlusLimit) centerPlusLimit else centerMinusLimit
+    centerY += deltaY
+    if (centerY !in centerMinusLimit..centerPlusLimit)
+      centerY = if (centerY > centerPlusLimit) centerPlusLimit else centerMinusLimit
+    calculationArguments()
+    updated()
+  }
+
+  private fun updated() {
     setChanged()
     notifyObservers()
   }

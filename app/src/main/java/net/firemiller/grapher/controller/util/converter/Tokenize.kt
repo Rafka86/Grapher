@@ -25,7 +25,7 @@ fun tokenize(str: String): Queue<Token> {
   }
 
   fun isConstant(string: String): Boolean
-      = when (string.toUpperCase(Locale.ENGLISH)) {
+    = when (string.toUpperCase(Locale.ENGLISH)) {
     "PI", "E", "EPS" -> true
     else -> false
   }

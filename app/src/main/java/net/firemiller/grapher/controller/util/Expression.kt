@@ -2,11 +2,13 @@ package net.firemiller.grapher.controller.util
 
 import net.firemiller.grapher.controller.util.converter.Token
 import net.firemiller.grapher.controller.util.converter.TokenType
+import net.firemiller.grapher.controller.util.converter.convert
+import net.firemiller.grapher.controller.util.converter.tokenize
 import net.firemiller.grapher.model.system.excepsions.InvalidExpException
 import java.util.*
 
 class Expression(expression: String) {
-  private var expr = Convert(Tokenize(expression.replace(" ", "")))
+  private var expr = convert(tokenize(expression.replace(" ", "")))
   var ArgumentSize = expr.size
 
   fun Eval(values: HashMap<String, Float>?): Float {
@@ -14,12 +16,12 @@ class Expression(expression: String) {
 
     fun VarOpr(token: Token) {
       ans.push(
-          if (values?.containsKey(token.Str) ?: throw InvalidExpException("Missing variables\' data."))
-            values[token.Str] else throw InvalidExpException("Missing variables\' data."))
+          if (values?.containsKey(token.string) ?: throw InvalidExpException("Missing variables\' data."))
+            values[token.string] else throw InvalidExpException("Missing variables\' data."))
     }
 
     fun ConstOpr(token: Token) {
-      when (token.Str.toUpperCase(Locale.ENGLISH)) {
+      when (token.string.toUpperCase(Locale.ENGLISH)) {
         "PI" -> ans.push(Math.PI.toFloat())
         "E" -> ans.push(Math.E.toFloat())
         "EPS" -> ans.push(Float.MIN_VALUE)
@@ -27,7 +29,7 @@ class Expression(expression: String) {
     }
 
     fun FunOpr(token: Token) {
-      when (token.Str) {
+      when (token.string) {
         "sin" -> ans.push(Math.sin(ans.pop().toDouble()).toFloat())
         "cos" -> ans.push(Math.cos(ans.pop().toDouble()).toFloat())
         "tan" -> ans.push(Math.tan(ans.pop().toDouble()).toFloat())
@@ -44,7 +46,7 @@ class Expression(expression: String) {
 
     fun OprOpr(token: Token) {
       val p = ans.pop()
-      when (token.Str) {
+      when (token.string) {
         "+" -> ans.push(ans.pop() + p)
         "-" -> ans.push(ans.pop() - p)
         "*" -> ans.push(ans.pop() * p)
@@ -57,8 +59,8 @@ class Expression(expression: String) {
 
     for (i in 0 until ArgumentSize) {
       val token = expr.poll()
-      when (token.ID) {
-        TokenType.NUMBER -> ans.push(token.Str.toFloat())
+      when (token.id) {
+        TokenType.NUMBER -> ans.push(token.string.toFloat())
         TokenType.VARIABLE -> try {
           VarOpr(token)
         } catch (e: InvalidExpException) {
@@ -79,7 +81,7 @@ class Expression(expression: String) {
   fun Eval() = Eval(null)
 
   fun Remake(newExp: String) {
-    expr = Convert(Tokenize(newExp.replace(" ", "")))
+    expr = convert(tokenize(newExp.replace(" ", "")))
     ArgumentSize = expr.size
   }
 
@@ -91,7 +93,7 @@ class Expression(expression: String) {
     for (i in 0 until ArgumentSize) {
       val token = expr.poll()
       sb.run {
-        append(token.Str)
+        append(token.string)
         append(if (i != ArgumentSize - 1) " " else "")
       }
       expr.add(token)

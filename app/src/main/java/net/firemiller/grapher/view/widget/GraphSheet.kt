@@ -20,7 +20,7 @@ import java.util.*
 class GraphSheet(context: Context?, attrs: AttributeSet?)
   : View(context, attrs), Observer, OnScaleGestureListener {
   private val mActivity = context as MainActivity
-  lateinit var grapherCore: GrapherCore
+  private lateinit var grapherCore: GrapherCore
   private val mScaleGestureDetector = ScaleGestureDetector(mActivity, this)
 
   var graphResolution = 100
@@ -44,7 +44,8 @@ class GraphSheet(context: Context?, attrs: AttributeSet?)
   private var mTouchViewXOld = 0.0f
   private var mTouchViewYOld = 0.0f
 
-  private val SAME_TOUCH_RANGE = 5.0f
+  private val SAME_TOUCH_RANGE = 25.0f
+  private val FRAME_RATE = 60.0f
 
   init {
     mTextPaint.run {
@@ -193,9 +194,16 @@ class GraphSheet(context: Context?, attrs: AttributeSet?)
     drawTouchLine()
   }
 
+  override fun performClick(): Boolean {
+    return super.performClick()
+  }
+
   override fun onTouchEvent(event: MotionEvent?): Boolean {
     super.onTouchEvent(event)
     mScaleGestureDetector.onTouchEvent(event)
+
+    fun checkRange(x: Float, y: Float): Boolean
+        = (mCandidateTouchX - x) * (mCandidateTouchX - x) + (mCandidateTouchY - y) * (mCandidateTouchY - y) in 0.0f..SAME_TOUCH_RANGE
 
     if (event?.pointerCount == 1) {
       when (event.action) {
@@ -207,15 +215,24 @@ class GraphSheet(context: Context?, attrs: AttributeSet?)
         }
         MotionEvent.ACTION_MOVE -> {
           grapherCore.addCenter(
-              (mTouchViewXOld - event.x),
-              (event.y - mTouchViewYOld)
+              (mTouchViewXOld - event.x) * FRAME_RATE,
+              (event.y - mTouchViewYOld) * FRAME_RATE
           )
           mTouchViewXOld = event.x
           mTouchViewYOld = event.y
         }
         MotionEvent.ACTION_UP -> {
+          performClick()
+          grapherCore.addCenter(
+              (mTouchViewXOld - event.x) * FRAME_RATE,
+              (event.y - mTouchViewYOld) * FRAME_RATE
+          )
           mTouchViewXOld = 0.0f
           mTouchViewYOld = 0.0f
+          if (checkRange(event.x, event.y)) {
+            mTouchX = mCandidateTouchX
+            mTouchY = mCandidateTouchY
+          }
         }
         MotionEvent.ACTION_CANCEL -> {
           mTouchViewXOld = 0.0f
@@ -228,18 +245,19 @@ class GraphSheet(context: Context?, attrs: AttributeSet?)
   }
 
   override fun onScaleEnd(detector: ScaleGestureDetector?) {
-    TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    return
   }
 
   override fun onScale(detector: ScaleGestureDetector?): Boolean {
-    TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    grapherCore.multipleSizeScale(1.0f + (1.0f - (detector?.scaleFactor ?: 1.0f)))
+    return true
   }
 
   override fun onScaleBegin(detector: ScaleGestureDetector?): Boolean {
-    TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    return true
   }
 
   override fun update(o: Observable?, arg: Any?) {
-    TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    invalidate()
   }
 }

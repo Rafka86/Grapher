@@ -9,7 +9,7 @@ import java.util.*
 
 class Expression(expression: String) {
   private var expr = convert(tokenize(expression.replace(" ", "")))
-  var ArgumentSize = expr.size
+  var argumentSize = expr.size
 
   fun Eval(values: HashMap<String, Float>?): Float {
     val ans = Stack<Float>()
@@ -57,7 +57,7 @@ class Expression(expression: String) {
       }
     }
 
-    for (i in 0 until ArgumentSize) {
+    for (i in 0 until argumentSize) {
       val token = expr.poll()
       when (token.id) {
         TokenType.NUMBER -> ans.push(token.string.toFloat())
@@ -82,7 +82,7 @@ class Expression(expression: String) {
 
   fun Remake(newExp: String) {
     expr = convert(tokenize(newExp.replace(" ", "")))
-    ArgumentSize = expr.size
+    argumentSize = expr.size
   }
 
   fun isEmpty() = expr.isEmpty()
@@ -90,11 +90,11 @@ class Expression(expression: String) {
   override fun toString(): String {
     val sb = StringBuilder()
 
-    for (i in 0 until ArgumentSize) {
+    for (i in 0 until argumentSize) {
       val token = expr.poll()
       sb.run {
         append(token.string)
-        append(if (i != ArgumentSize - 1) " " else "")
+        append(if (i != argumentSize - 1) " " else "")
       }
       expr.add(token)
     }

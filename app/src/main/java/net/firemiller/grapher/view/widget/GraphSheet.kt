@@ -6,6 +6,7 @@ import android.graphics.Color
 import android.graphics.DashPathEffect
 import android.graphics.Paint
 import android.util.AttributeSet
+import android.util.Log
 import android.view.MotionEvent
 import android.view.ScaleGestureDetector
 import android.view.ScaleGestureDetector.OnScaleGestureListener
@@ -19,8 +20,9 @@ import java.util.*
 class GraphSheet(context: Context?, attrs: AttributeSet?)
   : View(context, attrs), Observer, OnScaleGestureListener {
   private val mActivity = context as MainActivity
-  private lateinit var grapherCore: GrapherCore
+  lateinit var grapherCore: GrapherCore
   private val mScaleGestureDetector = ScaleGestureDetector(mActivity, this)
+  private var mScaleGesture = false
 
   var graphResolution = 100
     set(value) {
@@ -44,18 +46,19 @@ class GraphSheet(context: Context?, attrs: AttributeSet?)
   private var mTouchViewYOld = 0.0f
 
   private val SAME_TOUCH_RANGE = 25.0f
-  private val FRAME_RATE = 60.0f
+  private val SENSITIVITY = 0.01f
 
   init {
     mTextPaint.run {
       style = Paint.Style.FILL_AND_STROKE
       strokeWidth = 1.0f
-      textSize = 20.0f
+      textSize = 40.0f
       color = Color.GRAY
     }
     mTouchPaint.run {
-      style = Paint.Style.STROKE
+      style = Paint.Style.FILL_AND_STROKE
       strokeWidth = 2.0f
+      textSize = 40.0f
       color = Color.HSVToColor(floatArrayOf(0.0f, 0.5f, 1.0f))
       pathEffect = DashPathEffect(floatArrayOf(5.0f, 5.0f), 0.0f)
     }
@@ -132,7 +135,7 @@ class GraphSheet(context: Context?, attrs: AttributeSet?)
         var y = xAxisYPosition - gridSpanPixel
         if (y > height) y -= gridSpanPixel * ((y - height) / gridSpanPixel).toInt()
         var number = grapherCore.gridSpan * ((xAxisYPosition - y) / gridSpanPixel).toInt()
-        while (y < height) {
+        while (y > 0.0f) {
           canvas?.drawLine(0.0f, y, width.toFloat(), y, mPaint)
           canvas?.drawText(mDecimalFormat.format(number), 0.0f, y, mTextPaint)
           canvas?.drawText(mDecimalFormat.format(number), width - 25.0f, y, mTextPaint)
@@ -185,7 +188,9 @@ class GraphSheet(context: Context?, attrs: AttributeSet?)
 
       canvas?.drawLine(0.0f, drawY, width.toFloat(), drawY, mTouchPaint)
       canvas?.drawLine(drawX, 0.0f, drawX, height.toFloat(), mTouchPaint)
-      canvas?.drawText("(" + mDecimalFormat.format(mTouchX!!) + "," + mDecimalFormat.format(mTouchY!!) + ")", drawX, drawY, mTouchPaint)
+      mTouchPaint.strokeWidth = 1.0f
+      canvas?.drawText("( " + mDecimalFormat.format(mTouchX!!) + "," + mDecimalFormat.format(mTouchY!!) + " )",
+          drawX + 5.0f, drawY - 5.0f, mTouchPaint)
     }
 
     drawGrid()
@@ -204,31 +209,40 @@ class GraphSheet(context: Context?, attrs: AttributeSet?)
     fun checkRange(x: Float, y: Float): Boolean
         = (mCandidateTouchX - x) * (mCandidateTouchX - x) + (mCandidateTouchY - y) * (mCandidateTouchY - y) in 0.0f..SAME_TOUCH_RANGE
 
+    fun transFromViewToPosX(viewX: Float): Float
+        = viewX * grapherCore.deltaX + grapherCore.minX
+
+    fun transFromViewToPosY(viewY: Float): Float
+        = grapherCore.minY + grapherCore.sizeY - viewY * grapherCore.deltaY
+
     if (event?.pointerCount == 1) {
       when (event.action) {
         MotionEvent.ACTION_DOWN -> {
+          mScaleGesture = false
           mTouchViewXOld = event.x
           mTouchViewYOld = event.y
-          mCandidateTouchX = event.x * grapherCore.deltaX + grapherCore.minX
-          mCandidateTouchY = grapherCore.minY + grapherCore.sizeY - event.y * grapherCore.deltaY
+          mCandidateTouchX = transFromViewToPosX(event.x)
+          mCandidateTouchY = transFromViewToPosY(event.y)
         }
         MotionEvent.ACTION_MOVE -> {
+          if (mScaleGesture) return true
           grapherCore.addCenter(
-              (mTouchViewXOld - event.x) * FRAME_RATE,
-              (event.y - mTouchViewYOld) * FRAME_RATE
+              (mTouchViewXOld - event.x) * SENSITIVITY * grapherCore.gridSpan,
+              (event.y - mTouchViewYOld) * SENSITIVITY * grapherCore.gridSpan
           )
           mTouchViewXOld = event.x
           mTouchViewYOld = event.y
         }
         MotionEvent.ACTION_UP -> {
           performClick()
+          if (mScaleGesture) return true
           grapherCore.addCenter(
-              (mTouchViewXOld - event.x) * FRAME_RATE,
-              (event.y - mTouchViewYOld) * FRAME_RATE
+              (mTouchViewXOld - event.x) * SENSITIVITY * grapherCore.gridSpan,
+              (event.y - mTouchViewYOld) * SENSITIVITY * grapherCore.gridSpan
           )
           mTouchViewXOld = 0.0f
           mTouchViewYOld = 0.0f
-          if (checkRange(event.x, event.y)) {
+          if (checkRange(transFromViewToPosX(event.x), transFromViewToPosY(event.y))) {
             mTouchX = mCandidateTouchX
             mTouchY = mCandidateTouchY
           }
@@ -253,6 +267,7 @@ class GraphSheet(context: Context?, attrs: AttributeSet?)
   }
 
   override fun onScaleBegin(detector: ScaleGestureDetector?): Boolean {
+    mScaleGesture = true
     return true
   }
 

@@ -8,6 +8,8 @@ import kotlin.collections.HashMap
 class Function(graphercore: GrapherCore) : Observable() {
   private val gc = graphercore
 
+  var id: Long = 1
+
   private val exp = Expression("")
   var rawExpression = ""
     set (value) {

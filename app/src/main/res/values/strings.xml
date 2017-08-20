@@ -1,3 +1,5 @@
 <resources>
   <string name="app_name">Grapher</string>
+  <string name="function_equal">y=</string>
+  <string name="function_del">Delete</string>
 </resources>

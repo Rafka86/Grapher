@@ -34,9 +34,9 @@ class GrapherCore : Observable(), Observer {
   var gridSpan = 1.0f
     private set
 
-  private var viewWidth: Float = 0.0f
-  private var viewHeight: Float = 0.0f
-  private var viewRate: Float = 0.0f
+  private var viewWidth = 0.0f
+  private var viewHeight = 0.0f
+  private var viewRate = 0.0f
   var viewSizeFlag = false
     private set
 
